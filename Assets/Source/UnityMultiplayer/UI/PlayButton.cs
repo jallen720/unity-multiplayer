@@ -1,8 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using UnityMultiplayer.Managers;
 
-namespace UnityMultiplayer.UI {
+namespace UnityMultiplayer {
     
     [RequireComponent(typeof(Button))]
     public class PlayButton : MonoBehaviour {
