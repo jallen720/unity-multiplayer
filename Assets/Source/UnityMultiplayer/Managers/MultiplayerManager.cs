@@ -1,20 +1,20 @@
 ﻿using GooglePlayGames;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using UnityUtils.Managers;
-using USceneManager = UnityEngine.SceneManagement.SceneManager;
 
 namespace UnityMultiplayer {
     public class MultiplayerManager : Singleton<MultiplayerManager> {
         private PlayGamesPlatform playGamesPlatform;
         private List<IAuthStateListener> authStateListeners;
+        private RealtimeListener realtimeListener;
 
         public MultiplayerManager() {
             PlayGamesPlatform.DebugLogEnabled = true;
             PlayGamesPlatform.Activate();
             playGamesPlatform = PlayGamesPlatform.Instance;
             authStateListeners = new List<IAuthStateListener>();
+            realtimeListener = new RealtimeListener();
         }
 
         // Static members
@@ -24,28 +24,24 @@ namespace UnityMultiplayer {
                 Instance.playGamesPlatform.localUser.Authenticate(HandleAuthentication);
             }
             else {
-                Debug.Log("You're already signed in.");
-                StartGame();
+                DebugUtil.Log("You're already signed in.");
+                StartMatchmaking();
             }
         }
-                                                  
+
         private static void HandleAuthentication(bool authenticatedSuccessfully) {
             if (authenticatedSuccessfully) {
-                Debug.Log(
+                DebugUtil.Log(
                     "We're signed in! Welcome "
                     + Instance.playGamesPlatform.localUser.userName
                 );
 
                 UpdateAuthStateListeners(IsAuthenticated());
-                StartGame();
+                StartMatchmaking();
             }
             else {
-                Debug.Log("Oh... we're not signed in.");
+                DebugUtil.Log("Oh... we're not signed in.");
             }
-        }
-
-        private static void StartGame() {
-            USceneManager.LoadScene("Game");
         }
 
         public static void AddAuthStateListener(IAuthStateListener authStateListener) {
@@ -77,6 +73,15 @@ namespace UnityMultiplayer {
         public static void SignOut() {
             Instance.playGamesPlatform.SignOut();
             UpdateAuthStateListeners(IsAuthenticated());
+        }
+
+        private static void StartMatchmaking() {
+            Instance.playGamesPlatform.RealTime.CreateQuickGame(
+                minOpponents : 1,
+                maxOpponents : 1,
+                variant      : 0,
+                listener     : Instance.realtimeListener
+            );
         }
     }
 }
