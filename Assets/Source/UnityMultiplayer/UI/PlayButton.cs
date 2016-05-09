@@ -6,7 +6,7 @@ namespace UnityMultiplayer {
     [RequireComponent(typeof(Button))]
     public class PlayButton : MonoBehaviour {
         private void Start() {
-            GetComponent<Button>().onClick.AddListener(MultiplayerManager.SignInAndStartMPGame);
+            GetComponent<Button>().onClick.AddListener(MultiplayerManager.Authenticator.CheckSignIn);
         }
     }
 }

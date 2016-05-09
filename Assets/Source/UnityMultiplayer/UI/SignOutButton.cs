@@ -13,12 +13,12 @@ namespace UnityMultiplayer {
         }
 
         private void Init() {
-            MultiplayerManager.AddAuthStateListener(this);
-            button.onClick.AddListener(MultiplayerManager.SignOut);
+            MultiplayerManager.Authenticator.AddAuthStateListener(this);
+            button.onClick.AddListener(MultiplayerManager.Authenticator.SignOut);
         }
 
         private void OnDestroy() {
-            MultiplayerManager.RemoveAuthStateListener(this);
+            MultiplayerManager.Authenticator.RemoveAuthStateListener(this);
         }
 
         void IAuthStateListener.UpdateAuthState(bool isAuthenticated) {
