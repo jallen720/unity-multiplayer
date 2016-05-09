@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 
 namespace UnityMultiplayer {
+
     [RequireComponent(typeof(Rigidbody2D))]
     public class BallController : MonoBehaviour {
 
