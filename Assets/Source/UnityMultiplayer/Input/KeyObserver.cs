@@ -1,30 +1,41 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace UnityMultiplayer {
-    public sealed class KeyObserver {
-        private KeyCode keyCode;
-        private Action onKeyActiveCallback;
-        private Predicate<KeyCode> isKeyActivePredicate;
+    public class KeyObserver : MonoBehaviour {
+        private List<Key> keys;
 
-        public KeyObserver(
-            KeyCode keyCode,
-            Action onKeyActiveCallback,
-            Predicate<KeyCode> isKeyActivePredicate)
-        {
-            this.keyCode = keyCode;
-            this.onKeyActiveCallback = onKeyActiveCallback;
-            this.isKeyActivePredicate = isKeyActivePredicate;
+        private List<Key> Keys {
+            get {
+                return keys ?? LoadKeys();
+            }
         }
 
-        public KeyObserver(KeyCode keyCode, Action onKeyActiveCallback)
-            : this(keyCode, onKeyActiveCallback, Input.GetKeyDown)
-        {}
+        private List<Key> LoadKeys() {
+            return keys = new List<Key>();
+        }
 
-        public void CheckInput() {
-            if (isKeyActivePredicate(keyCode)) {
-                onKeyActiveCallback();
+        public void AddKey(Key key) {
+            Keys.Add(key);
+        }
+
+        private void Update() {
+            CheckForKeyInputs();
+        }
+
+        private void CheckForKeyInputs() {
+            foreach (Key key in Keys) {
+                if (key.isActivePredicate(key.code)) {
+                    key.onActiveCallback();
+                }
             }
+        }
+
+        public class Key {
+            public KeyCode code;
+            public Action onActiveCallback;
+            public Predicate<KeyCode> isActivePredicate = Input.GetKeyDown;
         }
     }
 }

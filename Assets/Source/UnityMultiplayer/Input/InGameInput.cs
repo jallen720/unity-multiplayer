@@ -2,15 +2,14 @@
 using UnityEngine.SceneManagement;
 
 namespace UnityMultiplayer {
+
+    [RequireComponent(typeof(KeyObserver))]
     public class InGameInput : MonoBehaviour {
-        private KeyObserver keyObserver;
-
         private void Start() {
-            keyObserver = new KeyObserver(KeyCode.Escape, LeaveGame);
-        }
-
-        private void Update() {
-            keyObserver.CheckInput();
+            GetComponent<KeyObserver>().AddKey(new KeyObserver.Key {
+                code = KeyCode.Escape,
+                onActiveCallback = LeaveGame
+            });
         }
 
         private void LeaveGame() {

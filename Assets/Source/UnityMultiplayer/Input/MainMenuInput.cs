@@ -1,15 +1,14 @@
 ﻿using UnityEngine;
 
 namespace UnityMultiplayer {
+
+    [RequireComponent(typeof(KeyObserver))]
     public class MainMenuInput : MonoBehaviour {
-        private KeyObserver keyObserver;
-
         private void Start() {
-            keyObserver = new KeyObserver(KeyCode.Escape, GameUtil.Quit);
-        }
-
-        private void Update() {
-            keyObserver.CheckInput();
+            GetComponent<KeyObserver>().AddKey(new KeyObserver.Key {
+                code = KeyCode.Escape,
+                onActiveCallback = GameUtil.Quit
+            });
         }
     }
 }
