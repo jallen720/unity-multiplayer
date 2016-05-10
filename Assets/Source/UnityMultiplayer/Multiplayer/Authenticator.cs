@@ -25,6 +25,9 @@ namespace UnityMultiplayer {
             if (!IsAuthenticated()) {
                 SignIn();
             }
+            else {
+                TriggerSignInListeners();
+            }
         }
 
         private void SignIn() {
