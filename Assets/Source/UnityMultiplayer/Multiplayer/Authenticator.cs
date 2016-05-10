@@ -1,47 +1,41 @@
 ﻿using GooglePlayGames;
+using System;
 using System.Collections.Generic;
 
 namespace UnityMultiplayer {
     public class Authenticator {
         private PlayGamesPlatform playGamesPlatform;
 
-        public List<ISignInListener> SignInListeners {
-            get;
-            private set;
-        }
-
-        public List<ISignOutListener> SignOutListeners {
+        public List<IAuthStateListener> AuthStateListeners {
             get;
             private set;
         }
 
         public Authenticator(PlayGamesPlatform playGamesPlatform) {
             this.playGamesPlatform = playGamesPlatform;
-            SignInListeners = new List<ISignInListener>();
-            SignOutListeners= new List<ISignOutListener>();
+            AuthStateListeners = new List<IAuthStateListener>();
         }
 
-        public void CheckSignIn() {
+        public void CheckSignIn(Action onSignedIn) {
             if (!IsAuthenticated()) {
-                SignIn();
+                SignIn(onSignedIn);
             }
             else {
-                TriggerSignInListeners();
+                onSignedIn();
             }
         }
 
-        private void SignIn() {
-            playGamesPlatform.localUser.Authenticate(HandleSignIn);
-        }
-
-        private void HandleSignIn(bool signedInSuccessfully) {
-            if (signedInSuccessfully) {
-                DebugUtil.Log("We're signed in! Welcome " + playGamesPlatform.localUser.userName);
-                TriggerSignInListeners();
-            }
-            else {
-                DebugUtil.Log("Authentication failed");
-            }
+        private void SignIn(Action onSignedIn) {
+            playGamesPlatform.localUser.Authenticate((bool signedInSuccessfully) => {
+                if (signedInSuccessfully) {
+                    DebugUtil.Log("We're signed in! Welcome " + playGamesPlatform.localUser.userName);
+                    TriggerAuthStateListeners(IsAuthenticated());
+                    onSignedIn();
+                }
+                else {
+                    DebugUtil.Log("Authentication failed");
+                }
+            });
         }
 
         public bool IsAuthenticated() {
@@ -50,18 +44,12 @@ namespace UnityMultiplayer {
 
         public void SignOut() {
             playGamesPlatform.SignOut();
-            TriggerSignOutListeners();
+            TriggerAuthStateListeners(IsAuthenticated());
         }
 
-        private void TriggerSignInListeners() {
-            foreach (ISignInListener signInListener in SignInListeners) {
-                signInListener.OnSignIn();
-            }
-        }
-
-        private void TriggerSignOutListeners() {
-            foreach (ISignOutListener signOutListener in SignOutListeners) {
-                signOutListener.OnSignOut();
+        private void TriggerAuthStateListeners(bool isAuthenticated) {
+            foreach (IAuthStateListener authStateListener in AuthStateListeners) {
+                authStateListener.OnAuthStateUpdated(isAuthenticated);
             }
         }
     }
