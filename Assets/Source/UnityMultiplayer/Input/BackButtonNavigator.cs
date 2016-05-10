@@ -4,7 +4,11 @@ using UnityEngine.SceneManagement;
 namespace UnityMultiplayer {
 
     [RequireComponent(typeof(KeyObserver))]
-    public class InGameInput : MonoBehaviour {
+    public class BackButtonNavigator : MonoBehaviour {
+
+        [SerializeField]
+        private string backScene;
+
         private void Start() {
             GetComponent<KeyObserver>().AddKey(new KeyObserver.Key {
                 code = KeyCode.Escape,
@@ -13,7 +17,7 @@ namespace UnityMultiplayer {
         }
 
         private void LeaveGame() {
-            SceneManager.LoadScene("MainMenu");
+            SceneManager.LoadScene(backScene);
         }
     }
 }
