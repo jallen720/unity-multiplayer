@@ -5,13 +5,13 @@ namespace UnityMultiplayer {
     public class MultiplayerManager : Singleton<MultiplayerManager> {
         private PlayGamesPlatform playGamesPlatform;
         private Authenticator authenticator;
-        private Matchmaker matchmaker;
+        private RealtimeListener realtimeListener;
 
         public MultiplayerManager() {
             InitPlayGamesPlatform();
             playGamesPlatform = PlayGamesPlatform.Instance;
             authenticator = new Authenticator(playGamesPlatform);
-            matchmaker = new Matchmaker(playGamesPlatform);
+            realtimeListener = new RealtimeListener();
         }
 
         private void InitPlayGamesPlatform() {
@@ -27,10 +27,23 @@ namespace UnityMultiplayer {
             }
         }
 
-        public static Matchmaker Matchmaker {
+        public static RealtimeListener RealtimeListener {
             get {
-                return Instance.matchmaker;
+                return Instance.realtimeListener;
             }
+        }
+
+        public static void StartMatchmaking() {
+            Instance.playGamesPlatform.RealTime.CreateQuickGame(
+                minOpponents: 1,
+                maxOpponents: 1,
+                variant: 0,
+                listener: RealtimeListener
+            );
+        }
+
+        public static void StopMatchmaking() {
+            Instance.playGamesPlatform.RealTime.LeaveRoom();
         }
     }
 }

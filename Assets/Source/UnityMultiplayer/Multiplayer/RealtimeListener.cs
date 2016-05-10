@@ -23,7 +23,7 @@ namespace UnityMultiplayer {
                 TriggerRoomConnectedListeners();
             }
             else {
-                DebugUtil.Log("Error connecting to the room");
+                DebugUtil.Log("Failed to connect to the room");
             }
         }
 
