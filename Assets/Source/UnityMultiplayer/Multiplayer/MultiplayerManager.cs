@@ -12,7 +12,6 @@ namespace UnityMultiplayer {
             playGamesPlatform = PlayGamesPlatform.Instance;
             authenticator = new Authenticator(playGamesPlatform);
             matchmaker = new Matchmaker(playGamesPlatform);
-            Init();
         }
 
         private void InitPlayGamesPlatform() {
@@ -20,15 +19,17 @@ namespace UnityMultiplayer {
             PlayGamesPlatform.Activate();
         }
 
-        private void Init() {
-            authenticator.AddAuthStateListener(matchmaker);
-        }
-
         // Static members
 
         public static Authenticator Authenticator {
             get {
                 return Instance.authenticator;
+            }
+        }
+
+        public static Matchmaker Matchmaker {
+            get {
+                return Instance.matchmaker;
             }
         }
     }

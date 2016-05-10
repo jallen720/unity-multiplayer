@@ -4,25 +4,34 @@ using UnityEngine.UI;
 namespace UnityMultiplayer {
 
     [RequireComponent(typeof(Button))]
-    public class SignOutButton : MonoBehaviour, IAuthStateListener {
+    public class SignOutButton : MonoBehaviour, ISignInListener, ISignOutListener {
         private Button button;
+        private Authenticator authenticator;
 
         private void Start() {
             button = GetComponent<Button>();
+            authenticator = MultiplayerManager.Authenticator;
             Init();
         }
 
         private void Init() {
-            MultiplayerManager.Authenticator.AddAuthStateListener(this);
-            button.onClick.AddListener(MultiplayerManager.Authenticator.SignOut);
+            authenticator.SignInListeners.Add(this);
+            authenticator.SignOutListeners.Add(this);
+            button.onClick.AddListener(authenticator.SignOut);
+            button.interactable = authenticator.IsAuthenticated();
         }
 
         private void OnDestroy() {
-            MultiplayerManager.Authenticator.RemoveAuthStateListener(this);
+            authenticator.SignInListeners.Remove(this);
+            authenticator.SignOutListeners.Remove(this);
         }
 
-        void IAuthStateListener.UpdateAuthState(bool isAuthenticated) {
-            button.interactable = isAuthenticated;
+        void ISignInListener.OnSignIn() {
+            button.interactable = true;
+        }
+
+        void ISignOutListener.OnSignOut() {
+            button.interactable = false;
         }
     }
 }

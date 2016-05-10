@@ -1,8 +1,18 @@
 ﻿using GooglePlayGames.BasicApi.Multiplayer;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace UnityMultiplayer {
     public class RealtimeListener : RealTimeMultiplayerListener {
+        public List<IRoomConnectedListener> RoomConnectedListeners {
+            get;
+            private set;
+        }
+
+        public RealtimeListener() {
+            RoomConnectedListeners = new List<IRoomConnectedListener>();
+        }
+
         void RealTimeMultiplayerListener.OnRoomSetupProgress(float percent) {
             DebugUtil.Log(string.Format("Setup: {0}%", percent));
         }
@@ -10,10 +20,16 @@ namespace UnityMultiplayer {
         void RealTimeMultiplayerListener.OnRoomConnected(bool success) {
             if (success) {
                 DebugUtil.Log("Successfully connected to the room");
-                // Start game here
+                TriggerRoomConnectedListeners();
             }
             else {
                 DebugUtil.Log("Error connecting to the room");
+            }
+        }
+
+        private void TriggerRoomConnectedListeners() {
+            foreach (IRoomConnectedListener roomConnectedListener in RoomConnectedListeners) {
+                roomConnectedListener.OnRoomConnected();
             }
         }
 
