@@ -1,4 +1,6 @@
 ﻿using GooglePlayGames;
+using GooglePlayGames.BasicApi.Multiplayer;
+using System.Collections.Generic;
 using UnityUtils.Managers;
 
 namespace UnityMultiplayer {
@@ -44,6 +46,14 @@ namespace UnityMultiplayer {
 
         public static void LeaveRoom() {
             Instance.playGamesPlatform.RealTime.LeaveRoom();
+        }
+
+        public static List<Participant> GetConnectedParticipants() {
+            return Instance.playGamesPlatform.RealTime.GetConnectedParticipants();
+        }
+
+        public static Participant GetUser() {
+            return Instance.playGamesPlatform.RealTime.GetSelf();
         }
     }
 }

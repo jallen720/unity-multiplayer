@@ -20,7 +20,7 @@ namespace UnityMultiplayer {
         }
 
         void IRoomConnectedListener.OnRoomConnected() {
-            SceneManager.LoadScene("Game");
+            //SceneManager.LoadScene("Game");
         }
     }
 }
