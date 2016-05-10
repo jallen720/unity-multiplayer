@@ -42,7 +42,7 @@ namespace UnityMultiplayer {
             );
         }
 
-        public static void StopMatchmaking() {
+        public static void LeaveRoom() {
             Instance.playGamesPlatform.RealTime.LeaveRoom();
         }
     }
