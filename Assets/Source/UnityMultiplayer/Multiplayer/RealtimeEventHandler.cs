@@ -9,8 +9,14 @@ namespace UnityMultiplayer {
             private set;
         }
 
+        public List<IPeerListener> PeerListeners {
+            get;
+            private set;
+        }
+
         public RealtimeEventHandler() {
             RoomConnectedListeners = new List<IRoomConnectedListener>();
+            PeerListeners = new List<IPeerListener>();
         }
 
         void RealTimeMultiplayerListener.OnRoomSetupProgress(float percent) {
@@ -34,19 +40,24 @@ namespace UnityMultiplayer {
         }
 
         void RealTimeMultiplayerListener.OnLeftRoom() {
-            DebugUtil.Log("Left the room");
+            DebugUtil.Log("User has left the room");
         }
 
         void RealTimeMultiplayerListener.OnParticipantLeft(Participant participant) {
-            DebugUtil.Log(string.Format("{0} left the room", participant.DisplayName));
+            DebugUtil.Log(string.Format(
+                "{0} declined the invitation or left",
+                participant.DisplayName
+            ));
         }
 
-        void RealTimeMultiplayerListener.OnPeersConnected(string[] participantIds) {
-            PeersMessage(participantIds, "connected");
+        void RealTimeMultiplayerListener.OnPeersConnected(string[] participantIDs) {
+            PeersMessage(participantIDs, "connected");
+            TriggerPeersConnectedListeners(participantIDs);
         }
 
-        void RealTimeMultiplayerListener.OnPeersDisconnected(string[] participantIds) {
-            PeersMessage(participantIds, "disconnected");
+        void RealTimeMultiplayerListener.OnPeersDisconnected(string[] participantIDs) {
+            PeersMessage(participantIDs, "disconnected");
+            TriggerPeersDisconnectedListeners(participantIDs);
         }
 
         private void PeersMessage(string[] participantIDs, string peerStatus) {
@@ -58,6 +69,22 @@ namespace UnityMultiplayer {
 
         private string PeersMessageAggregator(string message, string participantID) {
             return message + "    " + participantID + "\n";
+        }
+
+        private void TriggerPeersConnectedListeners(string[] participantIDs) {
+            foreach (string participantID in participantIDs) {
+                foreach (IPeerListener peerListener in PeerListeners) {
+                    peerListener.OnPeerConnected(participantID);
+                }
+            }
+        }
+
+        private void TriggerPeersDisconnectedListeners(string[] participantIDs) {
+            foreach (string participantID in participantIDs) {
+                foreach (IPeerListener peerListener in PeerListeners) {
+                    peerListener.OnPeerDisconnected(participantID);
+                }
+            }
         }
 
         void RealTimeMultiplayerListener.OnRealTimeMessageReceived(

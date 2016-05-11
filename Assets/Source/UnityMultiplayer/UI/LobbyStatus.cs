@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 namespace UnityMultiplayer {
-    public class LobbyUI : MonoBehaviour, IRoomConnectedListener {
+    public class LobbyStatus : MonoBehaviour, IRoomConnectedListener {
 
         [SerializeField]
         private Text lobbyMessage;
