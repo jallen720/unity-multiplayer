@@ -11,35 +11,44 @@ namespace UnityMultiplayer {
         [SerializeField]
         private Image spinner;
 
-        private RealtimeListener realtimeListener;
+        private RealtimeEventHandler realtimeEventHandler;
 
         private void Start() {
-            realtimeListener = MultiplayerManager.RealtimeListener;
+            realtimeEventHandler = MultiplayerManager.RealtimeEventHandler;
             Init();
         }
 
         private void Init() {
-            realtimeListener.RoomConnectedListeners.Add(this);
+            realtimeEventHandler.RoomConnectedListeners.Add(this);
         }
 
         private void OnDestroy() {
-            realtimeListener.RoomConnectedListeners.Remove(this);
+            realtimeEventHandler.RoomConnectedListeners.Remove(this);
         }
 
         void IRoomConnectedListener.OnRoomConnected() {
+            ShowOpponent();
+            DisableSpinner();
+        }
+
+        private void ShowOpponent() {
             lobbyMessage.text = string.Format("YOUR OPPONENT IS: {0}", GetOpponentName());
+        }
+
+        private void DisableSpinner() {
             spinner.gameObject.SetActive(false);
         }
 
         private string GetOpponentName() {
             return MultiplayerManager
+                .Client
                 .GetConnectedParticipants()
                 .Find(IsNotUser)
                 .DisplayName;
         }
 
         private bool IsNotUser(Participant participant) {
-            return participant.ParticipantId != MultiplayerManager.GetUser().ParticipantId;
+            return participant.ParticipantId != MultiplayerManager.GetUserParticipantID();
         }
     }
 }

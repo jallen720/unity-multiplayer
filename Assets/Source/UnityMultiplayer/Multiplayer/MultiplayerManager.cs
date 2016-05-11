@@ -1,24 +1,33 @@
 ﻿using GooglePlayGames;
 using GooglePlayGames.BasicApi.Multiplayer;
-using System.Collections.Generic;
 using UnityUtils.Managers;
 
 namespace UnityMultiplayer {
-    public class MultiplayerManager : Singleton<MultiplayerManager> {
+    public class MultiplayerManager : Singleton<MultiplayerManager>, IAuthStateListener {
         private PlayGamesPlatform playGamesPlatform;
         private Authenticator authenticator;
-        private RealtimeListener realtimeListener;
+        private RealtimeEventHandler realtimeEventHandler;
+        private IRealTimeMultiplayerClient client;
 
         public MultiplayerManager() {
-            InitPlayGamesPlatform();
             playGamesPlatform = PlayGamesPlatform.Instance;
             authenticator = new Authenticator(playGamesPlatform);
-            realtimeListener = new RealtimeListener();
+            realtimeEventHandler = new RealtimeEventHandler();
+            Init();
+        }
+
+        private void Init() {
+            InitPlayGamesPlatform();
+            authenticator.AuthStateListeners.Add(this);
         }
 
         private void InitPlayGamesPlatform() {
             PlayGamesPlatform.DebugLogEnabled = true;
             PlayGamesPlatform.Activate();
+        }
+
+        void IAuthStateListener.OnAuthStateUpdated(bool isAuthenticated) {
+            client = isAuthenticated ? playGamesPlatform.RealTime : null;
         }
 
         // Static members
@@ -29,31 +38,29 @@ namespace UnityMultiplayer {
             }
         }
 
-        public static RealtimeListener RealtimeListener {
+        public static RealtimeEventHandler RealtimeEventHandler {
             get {
-                return Instance.realtimeListener;
+                return Instance.realtimeEventHandler;
+            }
+        }
+
+        public static IRealTimeMultiplayerClient Client {
+            get {
+                return Instance.client;
             }
         }
 
         public static void StartMatchmaking() {
-            Instance.playGamesPlatform.RealTime.CreateQuickGame(
+            Client.CreateQuickGame(
                 minOpponents: 1,
                 maxOpponents: 1,
                 variant: 0,
-                listener: RealtimeListener
+                listener: RealtimeEventHandler
             );
         }
 
-        public static void LeaveRoom() {
-            Instance.playGamesPlatform.RealTime.LeaveRoom();
-        }
-
-        public static List<Participant> GetConnectedParticipants() {
-            return Instance.playGamesPlatform.RealTime.GetConnectedParticipants();
-        }
-
-        public static Participant GetUser() {
-            return Instance.playGamesPlatform.RealTime.GetSelf();
+        public static string GetUserParticipantID() {
+            return Client.GetSelf().ParticipantId;
         }
     }
 }

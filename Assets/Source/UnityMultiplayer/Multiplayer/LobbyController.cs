@@ -3,10 +3,10 @@ using UnityEngine.SceneManagement;
 
 namespace UnityMultiplayer {
     public class LobbyController : MonoBehaviour, IRoomConnectedListener {
-        private RealtimeListener realtimeListener;
+        private RealtimeEventHandler realtimeListener;
 
         private void Start() {
-            realtimeListener = MultiplayerManager.RealtimeListener;
+            realtimeListener = MultiplayerManager.RealtimeEventHandler;
             Init();
         }
 
