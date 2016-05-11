@@ -1,5 +1,4 @@
-﻿using GooglePlayGames.BasicApi.Multiplayer;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 namespace UnityMultiplayer {
@@ -32,23 +31,14 @@ namespace UnityMultiplayer {
         }
 
         private void ShowOpponent() {
-            lobbyMessage.text = string.Format("YOUR OPPONENT IS: {0}", GetOpponentName());
+            lobbyMessage.text = string.Format(
+                "YOUR OPPONENT IS: {0}",
+                MultiplayerManager.GetOpponent().DisplayName
+            );
         }
 
         private void DisableSpinner() {
             spinner.gameObject.SetActive(false);
-        }
-
-        private string GetOpponentName() {
-            return MultiplayerManager
-                .Client
-                .GetConnectedParticipants()
-                .Find(IsNotUser)
-                .DisplayName;
-        }
-
-        private bool IsNotUser(Participant participant) {
-            return participant.ParticipantId != MultiplayerManager.GetUserParticipantID();
         }
     }
 }

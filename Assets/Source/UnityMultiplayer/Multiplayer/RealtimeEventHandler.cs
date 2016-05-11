@@ -14,9 +14,15 @@ namespace UnityMultiplayer {
             private set;
         }
 
+        public Dictionary<string, List<IMessageListener>> ParticipantMessageListeners {
+            get;
+            private set;
+        }
+
         public RealtimeEventHandler() {
             RoomConnectedListeners = new List<IRoomConnectedListener>();
             PeerListeners = new List<IPeerListener>();
+            ParticipantMessageListeners = new Dictionary<string, List<IMessageListener>>();
         }
 
         void RealTimeMultiplayerListener.OnRoomSetupProgress(float percent) {
@@ -89,18 +95,22 @@ namespace UnityMultiplayer {
 
         void RealTimeMultiplayerListener.OnRealTimeMessageReceived(
             bool isReliable,
-            string senderId,
+            string participantID,
             byte[] data)
         {
-            DebugUtil.Log(string.Format(
-                "Realtime message received:\n" +
-                "    is reliable: {0}\n" +
-                "    sender ID: {1}\n" +
-                "    data: {2}\n",
-                isReliable,
-                senderId,
-                data
-            ));
+            CheckTriggerParticipantMessageListeners(participantID, data);
+        }
+
+        private void CheckTriggerParticipantMessageListeners(string participantID, byte[] data) {
+            if (ParticipantMessageListeners.ContainsKey(participantID)) {
+                TriggerParticipantMessageListeners(participantID, data);
+            }
+        }
+
+        private void TriggerParticipantMessageListeners(string participantID, byte[] data) {
+            foreach (IMessageListener messageListener in ParticipantMessageListeners[participantID]) {
+                messageListener.OnReceivedMessage(data);
+            }
         }
     }
 }

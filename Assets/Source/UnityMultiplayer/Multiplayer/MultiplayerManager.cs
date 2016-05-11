@@ -59,8 +59,12 @@ namespace UnityMultiplayer {
             );
         }
 
-        public static string GetUserParticipantID() {
-            return Client.GetSelf().ParticipantId;
+        public static Participant GetOpponent() {
+            return Client.GetConnectedParticipants().Find(IsNotUser);
+        }
+
+        private static bool IsNotUser(Participant participant) {
+            return participant.ParticipantId != Client.GetSelf().ParticipantId;
         }
     }
 }
