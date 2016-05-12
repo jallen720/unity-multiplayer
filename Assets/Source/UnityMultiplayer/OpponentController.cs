@@ -1,54 +1,38 @@
 ﻿using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace UnityMultiplayer {
+
+    [RequireComponent(typeof(PositionLerper))]
     public class OpponentController : MonoBehaviour, IMessageListener {
-        private Dictionary<string, List<IMessageListener>> participantMessageListeners;
+        private RealtimeEventHandler realtimeEventHandler;
         private PlayerController playerController;
+        private PositionLerper positionLerper;
         private string opponentID;
-        private float positionX;
+        private float opponentPositionX;
 
         private void Start() {
-            participantMessageListeners =
-                MultiplayerManager.RealtimeEventHandler.ParticipantMessageListeners;
-
+            realtimeEventHandler = MultiplayerManager.RealtimeEventHandler;
             playerController = FindObjectOfType<PlayerController>();
+            positionLerper = GetComponent<PositionLerper>();
             opponentID = MultiplayerManager.GetOpponent().ParticipantId;
-            positionX = transform.position.x;
+            opponentPositionX = transform.position.x;
             Init();
         }
 
         private void Init() {
-            if (participantMessageListeners.ContainsKey(opponentID)) {
-                participantMessageListeners[opponentID].Add(this);
-            }
-            else {
-                participantMessageListeners.Add(opponentID, new List<IMessageListener> { this });
-            }
+            positionLerper.PositionXGetter = () => opponentPositionX;
+            positionLerper.SpeedGetter = playerController.GetSpeed;
+            realtimeEventHandler.AddParticipantMessageListener(opponentID, this);
         }
 
         private void OnDestroy() {
-            participantMessageListeners[opponentID].Remove(this);
-        }
-
-        private void Update() {
-            UpdatePosition();
-        }
-
-        private void UpdatePosition() {
-            Vector3 position = transform.position;
-            position.x = LerpedX(position.x);
-            transform.position = position;
-        }
-
-        private float LerpedX(float currentX) {
-            return Mathf.Lerp(currentX, positionX, Time.deltaTime * playerController.Speed);
+            realtimeEventHandler.RemoveParticipantMessageListener(opponentID, this);
         }
 
         void IMessageListener.OnReceivedMessage(byte[] message) {
             MessageUtil.ValidateMessage(message);
-            positionX = BitConverter.ToSingle(message, MessageUtil.MESSAGE_DATA_START_INDEX);
+            opponentPositionX = BitConverter.ToSingle(message, MessageUtil.MESSAGE_DATA_START_INDEX);
         }
     }
 }

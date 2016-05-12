@@ -4,29 +4,52 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace UnityMultiplayer {
+
+    [RequireComponent(typeof(PositionLerper))]
     public class PlayerController : MonoBehaviour {
 
         [SerializeField]
         private float speed;
 
         [SerializeField]
-        private float positionEmissionIntervalSecs;
+        private int positionEmissionsPerSec;
 
+        private PositionLerper positionLerper;
         private WaitForSeconds positionEmissionIntervalWait;
         private List<byte> positionMessage;
-
-        public float Speed {
-            get {
-                return speed;
-            }
-        }
 
         private void Start() {
             const int POSITION_MESSAGE_SIZE = 6;
 
-            positionEmissionIntervalWait = new WaitForSeconds(positionEmissionIntervalSecs);
+            ValidatePositionEmissionsPerSec();
+            positionLerper = GetComponent<PositionLerper>();
+            positionEmissionIntervalWait = new WaitForSeconds(1f / positionEmissionsPerSec);
             positionMessage = new List<byte>(POSITION_MESSAGE_SIZE);
+            Init();
             StartCoroutine(PositionEmissionRoutine());
+        }
+
+        private void ValidatePositionEmissionsPerSec() {
+            if (positionEmissionsPerSec < 1) {
+                throw new Exception(string.Format(
+                    "position emissions / second must be greater than 0; was {0}",
+                    positionEmissionsPerSec
+                ));
+            }
+        }
+
+        private void Init() {
+            positionLerper.PositionUpdateCondition = () => Input.GetMouseButton(0);
+            positionLerper.PositionXGetter = MouseWorldPositionX;
+            positionLerper.SpeedGetter = GetSpeed;
+        }
+
+        private float MouseWorldPositionX() {
+            return Camera.main.ScreenToWorldPoint(Input.mousePosition).x;
+        }
+
+        public float GetSpeed() {
+            return speed;
         }
 
         private IEnumerator PositionEmissionRoutine() {
@@ -40,30 +63,6 @@ namespace UnityMultiplayer {
             MessageUtil.InitMessage(positionMessage);
             positionMessage.AddRange(BitConverter.GetBytes(transform.position.x));
             MultiplayerManager.Client.SendMessageToAll(false, positionMessage.ToArray());
-        }
-
-        private void Update() {
-            CheckInput();
-        }
-
-        private void CheckInput() {
-            if (Input.GetMouseButton(0)) {
-                UpdatePosition();
-            }
-        }
-
-        private void UpdatePosition() {
-            Vector3 position = transform.position;
-            position.x = LerpedX(position.x);
-            transform.position = position;
-        }
-
-        private float LerpedX(float currentX) {
-            return Mathf.Lerp(currentX, MouseWorldPositionX(), Time.deltaTime * speed);
-        }
-
-        private float MouseWorldPositionX() {
-            return Camera.main.ScreenToWorldPoint(Input.mousePosition).x;
         }
     }
 }

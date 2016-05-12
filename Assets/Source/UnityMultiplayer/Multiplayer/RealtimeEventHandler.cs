@@ -1,4 +1,5 @@
 ﻿using GooglePlayGames.BasicApi.Multiplayer;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -98,10 +99,6 @@ namespace UnityMultiplayer {
             string participantID,
             byte[] data)
         {
-            CheckTriggerParticipantMessageListeners(participantID, data);
-        }
-
-        private void CheckTriggerParticipantMessageListeners(string participantID, byte[] data) {
             if (ParticipantMessageListeners.ContainsKey(participantID)) {
                 TriggerParticipantMessageListeners(participantID, data);
             }
@@ -110,6 +107,37 @@ namespace UnityMultiplayer {
         private void TriggerParticipantMessageListeners(string participantID, byte[] data) {
             foreach (IMessageListener messageListener in ParticipantMessageListeners[participantID]) {
                 messageListener.OnReceivedMessage(data);
+            }
+        }
+
+        public void AddParticipantMessageListener(
+            string participantID,
+            IMessageListener messageListener)
+        {
+            if (ParticipantMessageListeners.ContainsKey(participantID)) {
+                ParticipantMessageListeners[participantID].Add(messageListener);
+            }
+            else {
+                ParticipantMessageListeners.Add(
+                    participantID,
+                    new List<IMessageListener> { messageListener }
+                );
+            }
+        }
+
+        public void RemoveParticipantMessageListener(
+            string participantID,
+            IMessageListener messageListener)
+        {
+            if (ParticipantMessageListeners.ContainsKey(participantID)) {
+                ParticipantMessageListeners[participantID].Remove(messageListener);
+            }
+            else {
+                throw new Exception(string.Format(
+                    "trying to remove message listener for participant {0} but no listeners " +
+                    "exist for that participant",
+                    participantID
+                ));
             }
         }
     }
