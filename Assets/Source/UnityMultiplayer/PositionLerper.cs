@@ -8,7 +8,7 @@ namespace UnityMultiplayer {
             set;
         }
 
-        public Func<float> PositionXGetter {
+        public Func<float> XPositionGetter {
             get;
             set;
         }
@@ -29,7 +29,7 @@ namespace UnityMultiplayer {
         }
 
         private bool CanUpdatePosition() {
-            return PositionXGetter != null && SpeedGetter != null;
+            return XPositionGetter != null && SpeedGetter != null;
         }
 
         private bool ShouldUpdatePosition() {
@@ -43,7 +43,7 @@ namespace UnityMultiplayer {
         }
 
         private float LerpedX(float currentX) {
-            return Mathf.Lerp(currentX, PositionXGetter(), Time.deltaTime * SpeedGetter());
+            return Mathf.Lerp(currentX, XPositionGetter(), Time.deltaTime * SpeedGetter());
         }
     }
 }

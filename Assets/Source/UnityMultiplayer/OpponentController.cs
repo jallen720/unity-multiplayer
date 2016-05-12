@@ -9,19 +9,19 @@ namespace UnityMultiplayer {
         private PlayerController playerController;
         private PositionLerper positionLerper;
         private string opponentID;
-        private float opponentPositionX;
+        private float opponentXPosition;
 
         private void Start() {
             realtimeEventHandler = MultiplayerManager.RealtimeEventHandler;
             playerController = FindObjectOfType<PlayerController>();
             positionLerper = GetComponent<PositionLerper>();
             opponentID = MultiplayerManager.GetOpponent().ParticipantId;
-            opponentPositionX = transform.position.x;
+            opponentXPosition = transform.position.x;
             Init();
         }
 
         private void Init() {
-            positionLerper.PositionXGetter = () => opponentPositionX;
+            positionLerper.XPositionGetter = () => opponentXPosition;
             positionLerper.SpeedGetter = playerController.GetSpeed;
             realtimeEventHandler.AddParticipantMessageListener(opponentID, this);
         }
@@ -32,7 +32,11 @@ namespace UnityMultiplayer {
 
         void IMessageListener.OnReceivedMessage(byte[] message) {
             MessageUtil.ValidateMessage(message);
-            opponentPositionX = BitConverter.ToSingle(message, MessageUtil.MESSAGE_DATA_START_INDEX);
+            opponentXPosition = GetMirroredOpponentXPosition(message);
+        }
+
+        private float GetMirroredOpponentXPosition(byte[] message) {
+            return -BitConverter.ToSingle(message, MessageUtil.MESSAGE_DATA_START_INDEX);
         }
     }
 }

@@ -40,11 +40,11 @@ namespace UnityMultiplayer {
 
         private void Init() {
             positionLerper.PositionUpdateCondition = () => Input.GetMouseButton(0);
-            positionLerper.PositionXGetter = MouseWorldPositionX;
+            positionLerper.XPositionGetter = MouseWorldXPosition;
             positionLerper.SpeedGetter = GetSpeed;
         }
 
-        private float MouseWorldPositionX() {
+        private float MouseWorldXPosition() {
             return Camera.main.ScreenToWorldPoint(Input.mousePosition).x;
         }
 
