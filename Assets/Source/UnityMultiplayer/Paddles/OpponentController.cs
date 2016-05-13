@@ -23,11 +23,11 @@ namespace UnityMultiplayer {
         private void Init() {
             positionLerper.XPositionGetter = () => opponentXPosition;
             positionLerper.SpeedGetter = playerController.GetSpeed;
-            realtimeEventHandler.AddParticipantMessageListener(opponentID, this);
+            realtimeEventHandler.AddMessageListener(opponentID, this);
         }
 
         private void OnDestroy() {
-            realtimeEventHandler.RemoveParticipantMessageListener(opponentID, this);
+            realtimeEventHandler.RemoveMessageListener(opponentID, this);
         }
 
         void IMessageListener.OnReceivedMessage(byte[] message) {

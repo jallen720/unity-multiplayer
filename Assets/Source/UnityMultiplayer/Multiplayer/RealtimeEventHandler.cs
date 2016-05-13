@@ -15,7 +15,7 @@ namespace UnityMultiplayer {
             private set;
         }
 
-        public Dictionary<string, List<IMessageListener>> ParticipantMessageListeners {
+        public Dictionary<string, List<IMessageListener>> MessageListeners {
             get;
             private set;
         }
@@ -23,7 +23,7 @@ namespace UnityMultiplayer {
         public RealtimeEventHandler() {
             RoomConnectedListeners = new List<IRoomConnectedListener>();
             PeerListeners = new List<IPeerListener>();
-            ParticipantMessageListeners = new Dictionary<string, List<IMessageListener>>();
+            MessageListeners = new Dictionary<string, List<IMessageListener>>();
         }
 
         void RealTimeMultiplayerListener.OnRoomSetupProgress(float percent) {
@@ -59,12 +59,20 @@ namespace UnityMultiplayer {
 
         void RealTimeMultiplayerListener.OnPeersConnected(string[] participantIDs) {
             PeersMessage(participantIDs, "connected");
-            TriggerPeersConnectedListeners(participantIDs);
+            TriggerPeerListeners(participantIDs, TriggerConnectPeer);
         }
 
         void RealTimeMultiplayerListener.OnPeersDisconnected(string[] participantIDs) {
             PeersMessage(participantIDs, "disconnected");
-            TriggerPeersDisconnectedListeners(participantIDs);
+            TriggerPeerListeners(participantIDs, TriggerDisconnectPeer);
+        }
+
+        private void TriggerConnectPeer(IPeerListener peerListener, string participantID) {
+            peerListener.OnPeerConnected(participantID);
+        }
+
+        private void TriggerDisconnectPeer(IPeerListener peerListener, string participantID) {
+            peerListener.OnPeerDisconnected(participantID);
         }
 
         private void PeersMessage(string[] participantIDs, string peerStatus) {
@@ -78,18 +86,13 @@ namespace UnityMultiplayer {
             return message + "    " + participantID + "\n";
         }
 
-        private void TriggerPeersConnectedListeners(string[] participantIDs) {
+        private void TriggerPeerListeners(
+            string[] participantIDs,
+            Action<IPeerListener, string> triggerAction)
+        {
             foreach (string participantID in participantIDs) {
                 foreach (IPeerListener peerListener in PeerListeners) {
-                    peerListener.OnPeerConnected(participantID);
-                }
-            }
-        }
-
-        private void TriggerPeersDisconnectedListeners(string[] participantIDs) {
-            foreach (string participantID in participantIDs) {
-                foreach (IPeerListener peerListener in PeerListeners) {
-                    peerListener.OnPeerDisconnected(participantID);
+                    triggerAction(peerListener, participantID);
                 }
             }
         }
@@ -99,38 +102,29 @@ namespace UnityMultiplayer {
             string participantID,
             byte[] data)
         {
-            if (ParticipantMessageListeners.ContainsKey(participantID)) {
-                TriggerParticipantMessageListeners(participantID, data);
+            if (MessageListeners.ContainsKey(participantID)) {
+                TriggerMessageListeners(participantID, data);
             }
         }
 
-        private void TriggerParticipantMessageListeners(string participantID, byte[] data) {
-            foreach (IMessageListener messageListener in ParticipantMessageListeners[participantID]) {
+        private void TriggerMessageListeners(string participantID, byte[] data) {
+            foreach (IMessageListener messageListener in MessageListeners[participantID]) {
                 messageListener.OnReceivedMessage(data);
             }
         }
 
-        public void AddParticipantMessageListener(
-            string participantID,
-            IMessageListener messageListener)
-        {
-            if (ParticipantMessageListeners.ContainsKey(participantID)) {
-                ParticipantMessageListeners[participantID].Add(messageListener);
+        public void AddMessageListener(string participantID, IMessageListener messageListener) {
+            if (MessageListeners.ContainsKey(participantID)) {
+                MessageListeners[participantID].Add(messageListener);
             }
             else {
-                ParticipantMessageListeners.Add(
-                    participantID,
-                    new List<IMessageListener> { messageListener }
-                );
+                MessageListeners.Add(participantID, new List<IMessageListener> { messageListener });
             }
         }
 
-        public void RemoveParticipantMessageListener(
-            string participantID,
-            IMessageListener messageListener)
-        {
-            if (ParticipantMessageListeners.ContainsKey(participantID)) {
-                ParticipantMessageListeners[participantID].Remove(messageListener);
+        public void RemoveMessageListener(string participantID, IMessageListener messageListener) {
+            if (MessageListeners.ContainsKey(participantID)) {
+                MessageListeners[participantID].Remove(messageListener);
             }
             else {
                 throw new Exception(string.Format(

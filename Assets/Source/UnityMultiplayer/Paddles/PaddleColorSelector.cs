@@ -7,7 +7,7 @@ namespace UnityMultiplayer {
 
     [RequireComponent(typeof(SpriteRenderer))]
     public class PaddleColorSelector : MonoBehaviour {
-        public void SetPaddleColor(Participant participant) {
+        public void SetColorFor(Participant participant) {
             GetComponent<SpriteRenderer>().color =
                 PaddleConfig.PaddleColors[GetParticipantIndex(participant)];
         }
