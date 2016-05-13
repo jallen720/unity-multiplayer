@@ -22,7 +22,7 @@ namespace UnityMultiplayer {
         }
 
         private void InitPlayGamesPlatform() {
-            PlayGamesPlatform.DebugLogEnabled = true;
+            PlayGamesPlatform.DebugLogEnabled = false;// true;
             PlayGamesPlatform.Activate();
         }
 
