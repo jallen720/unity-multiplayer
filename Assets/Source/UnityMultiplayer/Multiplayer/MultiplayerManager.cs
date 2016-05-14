@@ -1,5 +1,6 @@
 ﻿using GooglePlayGames;
 using GooglePlayGames.BasicApi.Multiplayer;
+using System.Linq;
 using UnityUtils.Managers;
 
 namespace UnityMultiplayer {
@@ -7,18 +8,21 @@ namespace UnityMultiplayer {
         private PlayGamesPlatform playGamesPlatform;
         private Authenticator authenticator;
         private RealtimeEventHandler realtimeEventHandler;
+        private RealtimeMessageHandler realtimeMessageHandler;
         private IRealTimeMultiplayerClient client;
 
         public MultiplayerManager() {
             playGamesPlatform = PlayGamesPlatform.Instance;
             authenticator = new Authenticator(playGamesPlatform);
             realtimeEventHandler = new RealtimeEventHandler();
+            realtimeMessageHandler = new RealtimeMessageHandler();
             Init();
         }
 
         private void Init() {
             InitPlayGamesPlatform();
             authenticator.AuthStateListeners.Add(this);
+            realtimeEventHandler.RealtimeMessageListeners.Add(realtimeMessageHandler);
         }
 
         private void InitPlayGamesPlatform() {
@@ -44,6 +48,12 @@ namespace UnityMultiplayer {
             }
         }
 
+        public static RealtimeMessageHandler RealtimeMessageHandler {
+            get {
+                return Instance.realtimeMessageHandler;
+            }
+        }
+
         public static IRealTimeMultiplayerClient Client {
             get {
                 return Instance.client;
@@ -65,6 +75,11 @@ namespace UnityMultiplayer {
 
         private static bool IsNotUser(Participant participant) {
             return participant.ParticipantId != Client.GetSelf().ParticipantId;
+        }
+
+        public static bool IsHost() {
+            return Client.GetConnectedParticipants().Last().ParticipantId ==
+                   Client.GetSelf().ParticipantId;
         }
     }
 }

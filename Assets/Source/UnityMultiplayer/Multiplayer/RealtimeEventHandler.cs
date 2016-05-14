@@ -15,7 +15,7 @@ namespace UnityMultiplayer {
             private set;
         }
 
-        public Dictionary<string, List<IMessageListener>> MessageListeners {
+        public List<IRealtimeMessageListener> RealtimeMessageListeners {
             get;
             private set;
         }
@@ -23,7 +23,7 @@ namespace UnityMultiplayer {
         public RealtimeEventHandler() {
             RoomConnectedListeners = new List<IRoomConnectedListener>();
             PeerListeners = new List<IPeerListener>();
-            MessageListeners = new Dictionary<string, List<IMessageListener>>();
+            RealtimeMessageListeners = new List<IRealtimeMessageListener>();
         }
 
         void RealTimeMultiplayerListener.OnRoomSetupProgress(float percent) {
@@ -102,36 +102,8 @@ namespace UnityMultiplayer {
             string participantID,
             byte[] data)
         {
-            if (MessageListeners.ContainsKey(participantID)) {
-                TriggerMessageListeners(participantID, data);
-            }
-        }
-
-        private void TriggerMessageListeners(string participantID, byte[] data) {
-            foreach (IMessageListener messageListener in MessageListeners[participantID]) {
-                messageListener.OnReceivedMessage(data);
-            }
-        }
-
-        public void AddMessageListener(string participantID, IMessageListener messageListener) {
-            if (MessageListeners.ContainsKey(participantID)) {
-                MessageListeners[participantID].Add(messageListener);
-            }
-            else {
-                MessageListeners.Add(participantID, new List<IMessageListener> { messageListener });
-            }
-        }
-
-        public void RemoveMessageListener(string participantID, IMessageListener messageListener) {
-            if (MessageListeners.ContainsKey(participantID)) {
-                MessageListeners[participantID].Remove(messageListener);
-            }
-            else {
-                throw new Exception(string.Format(
-                    "trying to remove message listener for participant {0} but no listeners " +
-                    "exist for that participant",
-                    participantID
-                ));
+            foreach (IRealtimeMessageListener realtimeMessageListener in RealtimeMessageListeners) {
+                realtimeMessageListener.OnReceivedRealtimeMessage(isReliable, participantID, data);
             }
         }
     }

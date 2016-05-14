@@ -5,14 +5,14 @@ namespace UnityMultiplayer {
 
     [RequireComponent(typeof(PositionLerper))]
     public class OpponentController : MonoBehaviour, IMessageListener {
-        private RealtimeEventHandler realtimeEventHandler;
+        private RealtimeMessageHandler realtimeMessageHandler;
         private PlayerController playerController;
         private PositionLerper positionLerper;
         private string opponentID;
         private float opponentXPosition;
 
         private void Start() {
-            realtimeEventHandler = MultiplayerManager.RealtimeEventHandler;
+            realtimeMessageHandler = MultiplayerManager.RealtimeMessageHandler;
             playerController = FindObjectOfType<PlayerController>();
             positionLerper = GetComponent<PositionLerper>();
             opponentID = MultiplayerManager.GetOpponent().ParticipantId;
@@ -23,15 +23,14 @@ namespace UnityMultiplayer {
         private void Init() {
             positionLerper.XPositionGetter = () => opponentXPosition;
             positionLerper.SpeedGetter = playerController.GetSpeed;
-            realtimeEventHandler.AddMessageListener(opponentID, this);
+            realtimeMessageHandler.AddMessageListener(opponentID, this);
         }
 
         private void OnDestroy() {
-            realtimeEventHandler.RemoveMessageListener(opponentID, this);
+            realtimeMessageHandler.RemoveMessageListener(opponentID, this);
         }
 
         void IMessageListener.OnReceivedMessage(byte[] message) {
-            MessageUtil.ValidateMessage(message);
             opponentXPosition = GetMirroredOpponentXPosition(message);
         }
 

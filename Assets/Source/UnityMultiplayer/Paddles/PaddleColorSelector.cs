@@ -1,6 +1,4 @@
 ﻿using GooglePlayGames.BasicApi.Multiplayer;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace UnityMultiplayer {
@@ -13,15 +11,10 @@ namespace UnityMultiplayer {
         }
 
         private int GetParticipantIndex(Participant participant) {
-            var participantIDs = new List<string>(
-                MultiplayerManager
-                    .Client
-                    .GetConnectedParticipants()
-                    .Select(connectedParticipant => connectedParticipant.ParticipantId)
-            );
-
-            participantIDs.Sort();
-            return participantIDs.IndexOf(participant.ParticipantId);
+            return MultiplayerManager
+                .Client
+                .GetConnectedParticipants()
+                .IndexOf(participant);
         }
     }
 }

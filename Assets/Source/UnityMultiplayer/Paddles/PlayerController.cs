@@ -60,7 +60,7 @@ namespace UnityMultiplayer {
         }
 
         private void EmitPosition() {
-            MessageUtil.InitMessage(positionMessage);
+            MessageUtil.InitMessage(positionMessage, (byte)MessageTypes.PaddlePosition);
             positionMessage.AddRange(BitConverter.GetBytes(transform.position.x));
             MultiplayerManager.Client.SendMessageToAll(false, positionMessage.ToArray());
         }
