@@ -23,6 +23,7 @@ namespace UnityMultiplayer {
         // Used if ball is receiver
         private RealtimeMessageHandler realtimeMessageHandler;
         private string opponentID;
+        private Vector3 position;
 
         private void Start() {
             CheckInit();
@@ -86,12 +87,15 @@ namespace UnityMultiplayer {
         private void InitAsReceiver() {
             realtimeMessageHandler = MultiplayerManager.RealtimeMessageHandler;
             opponentID = MultiplayerManager.GetOpponent().ParticipantId;
+            position = transform.position;
             GetComponent<CircleCollider2D>().enabled = false;
 
             realtimeMessageHandler.AddMessageListener(
                 MessageType.BallPosition,
                 opponentID,
                 this);
+
+            StartCoroutine(PositionLerpRoutine());
         }
 
         private void OnDestroy() {
@@ -103,18 +107,19 @@ namespace UnityMultiplayer {
             }
         }
 
-        void IMessageListener.OnReceivedMessage(byte[] message) {
-            transform.position = GetMirroredPosition(message);
+        private IEnumerator PositionLerpRoutine() {
+            while (true) {
+                transform.position = Vector3.Lerp(transform.position, position, speed * Time.deltaTime);
+                yield return null;
+            }
         }
 
-        private Vector2 GetMirroredPosition(byte[] message) {
+        void IMessageListener.OnReceivedMessage(byte[] message) {
             const int X_POSITION_INDEX = MessageUtil.MESSAGE_DATA_START_INDEX;
             const int Y_POSITION_INDEX = X_POSITION_INDEX + sizeof(float);
 
-            return new Vector2(
-                -BitConverter.ToSingle(message, X_POSITION_INDEX),
-                -BitConverter.ToSingle(message, Y_POSITION_INDEX)
-            );
+            position.x = -BitConverter.ToSingle(message, X_POSITION_INDEX);
+            position.y = -BitConverter.ToSingle(message, Y_POSITION_INDEX);
         }
     }
 }

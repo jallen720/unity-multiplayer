@@ -21,13 +21,17 @@ namespace UnityMultiplayer {
         }
 
         private void Init() {
-            positionLerper.XPositionGetter = () => opponentXPosition;
-            positionLerper.SpeedGetter = playerController.GetSpeed;
+            InitPositionLerper();
 
             realtimeMessageHandler.AddMessageListener(
                 MessageType.PaddlePosition,
                 opponentID,
                 this);
+        }
+
+        private void InitPositionLerper() {
+            positionLerper.XPositionGetter = () => opponentXPosition;
+            positionLerper.SpeedGetter = playerController.GetSpeed;
         }
 
         private void OnDestroy() {

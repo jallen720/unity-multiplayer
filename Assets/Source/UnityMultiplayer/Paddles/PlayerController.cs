@@ -26,7 +26,7 @@ namespace UnityMultiplayer {
             positionEmissionIntervalWait = new WaitForSeconds(1f / positionEmissionsPerSec);
             positionMessage = new List<byte>();
             client = MultiplayerManager.Client;
-            Init();
+            InitPositionLerper();
             StartCoroutine(PositionEmissionRoutine());
         }
 
@@ -39,7 +39,7 @@ namespace UnityMultiplayer {
             }
         }
 
-        private void Init() {
+        private void InitPositionLerper() {
             positionLerper.PositionUpdateCondition = () => Input.GetMouseButton(0);
             positionLerper.XPositionGetter = MouseWorldXPosition;
             positionLerper.SpeedGetter = GetSpeed;
