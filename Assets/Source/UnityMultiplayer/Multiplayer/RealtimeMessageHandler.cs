@@ -19,7 +19,7 @@ namespace UnityMultiplayer {
 
         public RealtimeMessageHandler() {
             messageTypeRouters = new Dictionary<MessageTypes, MessageRouter> {
-                { MessageTypes.BallPosition    , RouteBallPositionMessage   },
+                { MessageTypes.BallPosition   , RouteBallPositionMessage   },
                 { MessageTypes.PaddlePosition , RoutePaddlePositionMessage },
             };
 
