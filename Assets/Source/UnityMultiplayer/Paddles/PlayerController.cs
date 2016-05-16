@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GooglePlayGames.BasicApi.Multiplayer;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -17,14 +18,14 @@ namespace UnityMultiplayer {
         private PositionLerper positionLerper;
         private WaitForSeconds positionEmissionIntervalWait;
         private List<byte> positionMessage;
+        private IRealTimeMultiplayerClient client;
 
         private void Start() {
-            const int POSITION_MESSAGE_SIZE = 6;
-
             ValidatePositionEmissionsPerSec();
             positionLerper = GetComponent<PositionLerper>();
             positionEmissionIntervalWait = new WaitForSeconds(1f / positionEmissionsPerSec);
-            positionMessage = new List<byte>(POSITION_MESSAGE_SIZE);
+            positionMessage = new List<byte>();
+            client = MultiplayerManager.Client;
             Init();
             StartCoroutine(PositionEmissionRoutine());
         }
@@ -60,9 +61,12 @@ namespace UnityMultiplayer {
         }
 
         private void EmitPosition() {
-            MessageUtil.InitMessage(positionMessage, (byte)MessageTypes.PaddlePosition);
+            MessageUtil.InitMessage(positionMessage, (byte)MessageType.PaddlePosition);
             positionMessage.AddRange(BitConverter.GetBytes(transform.position.x));
-            MultiplayerManager.Client.SendMessageToAll(false, positionMessage.ToArray());
+
+            client.SendMessageToAll(
+                reliable: false,
+                data: positionMessage.ToArray());
         }
     }
 }

@@ -9,27 +9,27 @@ namespace UnityMultiplayer {
             string participantID,
             byte[] message);
 
-        private readonly Dictionary<MessageTypes, MessageRouter> messageTypeRouters;
         private readonly List<byte> validMessageTypes;
 
-        public Dictionary<string, List<IMessageListener>> MessageListeners {
+        public Dictionary<MessageType, Dictionary<string, List<IMessageListener>>> MessageListeners {
             get;
             private set;
         }
 
         public RealtimeMessageHandler() {
-            messageTypeRouters = new Dictionary<MessageTypes, MessageRouter> {
-                { MessageTypes.BallPosition   , RouteBallPositionMessage   },
-                { MessageTypes.PaddlePosition , RoutePaddlePositionMessage },
-            };
-
             validMessageTypes = new List<byte>();
-            MessageListeners = new Dictionary<string, List<IMessageListener>>();
+
+            MessageListeners =
+                new Dictionary<MessageType, Dictionary<string, List<IMessageListener>>> {
+                    { MessageType.BallPosition   , new Dictionary<string, List<IMessageListener>>() },
+                    { MessageType.PaddlePosition , new Dictionary<string, List<IMessageListener>>() },
+                };
+
             InitValidMessageTypes();
         }
 
         private void InitValidMessageTypes() {
-            validMessageTypes.AddRange(Enum.GetValues(typeof(MessageTypes)).Cast<byte>());
+            validMessageTypes.AddRange(Enum.GetValues(typeof(MessageType)).Cast<byte>());
         }
 
         void IRealtimeMessageListener.OnReceivedRealtimeMessage(
@@ -38,54 +38,87 @@ namespace UnityMultiplayer {
             byte[] message)
         {
             MessageUtil.ValidateMessage(message, validMessageTypes);
-            messageTypeRouters[GetMessageType(message)](isReliable, participantID, message);
+
+            TriggerMessageListeners(
+                GetMessageType(message),
+                participantID,
+                message);
         }
 
-        private MessageTypes GetMessageType(byte[] message) {
-            return (MessageTypes)MessageUtil.GetMessageType(message);
+        private MessageType GetMessageType(byte[] message) {
+            return (MessageType)MessageUtil.GetMessageType(message);
         }
 
-        private void RouteBallPositionMessage(bool _, string __, byte[] message) {
-
+        private void TriggerMessageListeners(
+            MessageType messageType,
+            string participantID,
+            byte[] message)
+        {
+            GetMessageListeners(messageType, messageListeners => {
+                if (messageListeners.ContainsKey(participantID)) {
+                    foreach (IMessageListener messageListener in messageListeners[participantID]) {
+                        messageListener.OnReceivedMessage(message);
+                    }
+                }
+            });
         }
 
-        private void RoutePaddlePositionMessage(bool _, string participantID, byte[] message) {
-            if (MessageListeners.ContainsKey(participantID)) {
-                TriggerMessageListeners(participantID, message);
-            }
+        public void AddMessageListener(
+            MessageType messageType,
+            string participantID,
+            IMessageListener messageListener)
+        {
+            GetMessageListeners(messageType, messageListeners => {
+                if (messageListeners.ContainsKey(participantID)) {
+                    messageListeners[participantID].Add(messageListener);
+                }
+                else {
+                    messageListeners.Add(
+                        participantID,
+                        new List<IMessageListener> { messageListener });
+                }
+            });
         }
 
-        private void TriggerMessageListeners(string participantID, byte[] message) {
-            foreach (IMessageListener messageListener in MessageListeners[participantID]) {
-                messageListener.OnReceivedMessage(message);
-            }
-        }
-
-        public void AddMessageListener(string participantID, IMessageListener messageListener) {
-            if (MessageListeners.ContainsKey(participantID)) {
-                MessageListeners[participantID].Add(messageListener);
-            }
-            else {
-                MessageListeners.Add(
-                    participantID,
-                    new List<IMessageListener> { messageListener });
-            }
-        }
-
-        public void RemoveMessageListener(string participantID, IMessageListener messageListener) {
-            if (MessageListeners.ContainsKey(participantID)) {
-                MessageListeners[participantID].Remove(messageListener);
-            }
-            else {
+        private void ValidateHasListeners(MessageType messageType) {
+            if (!MessageListeners.ContainsKey(messageType)) {
                 throw new Exception(string.Format(
-                    "trying to remove message listener for participant {0} but no listeners " +
-                    "exist for that participant",
-                    participantID));
+                    "Message type {0} has not been setup in {1}",
+                    messageType,
+                    typeof(RealtimeMessageHandler)
+                ));
             }
+        }
+
+        public void RemoveMessageListener(
+            MessageType messageType,
+            string participantID,
+            IMessageListener messageListener)
+        {
+            GetMessageListeners(messageType, messageListeners => {
+                if (messageListeners.ContainsKey(participantID)) {
+                    messageListeners[participantID].Remove(messageListener);
+                }
+                else {
+                    throw new Exception(string.Format(
+                        "trying to remove message listener for participant {0} but no listeners " +
+                        "exist for that participant",
+                        participantID
+                    ));
+                }
+            });
+        }
+
+        private void GetMessageListeners(
+            MessageType messageType,
+            Action<Dictionary<string, List<IMessageListener>>> callback)
+        {
+            ValidateHasListeners(messageType);
+            callback(MessageListeners[messageType]);
         }
     }
 
-    public enum MessageTypes : byte {
+    public enum MessageType : byte {
         PaddlePosition,
         BallPosition,
     }
