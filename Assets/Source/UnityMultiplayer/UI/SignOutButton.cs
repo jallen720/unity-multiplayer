@@ -4,7 +4,7 @@ using UnityEngine.UI;
 namespace UnityMultiplayer {
 
     [RequireComponent(typeof(Button))]
-    public class SignOutButton : MonoBehaviour, IAuthStateListener {
+    public class SignOutButton : MonoBehaviour {
         private Button button;
         private Authenticator authenticator;
 
@@ -15,16 +15,16 @@ namespace UnityMultiplayer {
         }
 
         private void Init() {
-            authenticator.AuthStateListeners.Add(this);
+            authenticator.AuthStateUpdatedEvent.Subscribe(OnAuthStateUpdated);
             button.onClick.AddListener(authenticator.SignOut);
             button.interactable = authenticator.IsAuthenticated();
         }
 
         private void OnDestroy() {
-            authenticator.AuthStateListeners.Remove(this);
+            authenticator.AuthStateUpdatedEvent.Unsubscribe(OnAuthStateUpdated);
         }
 
-        void IAuthStateListener.OnAuthStateUpdated(bool isAuthenticated) {
+        private void OnAuthStateUpdated(bool isAuthenticated) {
             button.interactable = isAuthenticated;
         }
     }

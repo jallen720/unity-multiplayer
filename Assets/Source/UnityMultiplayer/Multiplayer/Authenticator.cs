@@ -1,19 +1,19 @@
 ﻿using GooglePlayGames;
 using System;
-using System.Collections.Generic;
+using UnityUtils.EventUtils;
 
 namespace UnityMultiplayer {
     public class Authenticator {
         private PlayGamesPlatform playGamesPlatform;
 
-        public List<IAuthStateListener> AuthStateListeners {
+        public Event<bool> AuthStateUpdatedEvent {
             get;
             private set;
         }
 
         public Authenticator(PlayGamesPlatform playGamesPlatform) {
             this.playGamesPlatform = playGamesPlatform;
-            AuthStateListeners = new List<IAuthStateListener>();
+            AuthStateUpdatedEvent = new Event<bool>();
         }
 
         public void CheckSignIn(Action onSignedIn) {
@@ -29,7 +29,7 @@ namespace UnityMultiplayer {
             playGamesPlatform.localUser.Authenticate((bool signedInSuccessfully) => {
                 if (signedInSuccessfully) {
                     DebugUtil.Log("We're signed in! Welcome " + playGamesPlatform.localUser.userName);
-                    TriggerAuthStateListeners(IsAuthenticated());
+                    AuthStateUpdatedEvent.Trigger(IsAuthenticated());
                     onSignedIn();
                 }
                 else {
@@ -44,13 +44,7 @@ namespace UnityMultiplayer {
 
         public void SignOut() {
             playGamesPlatform.SignOut();
-            TriggerAuthStateListeners(IsAuthenticated());
-        }
-
-        private void TriggerAuthStateListeners(bool isAuthenticated) {
-            foreach (IAuthStateListener authStateListener in AuthStateListeners) {
-                authStateListener.OnAuthStateUpdated(isAuthenticated);
-            }
+            AuthStateUpdatedEvent.Trigger(IsAuthenticated());
         }
     }
 }

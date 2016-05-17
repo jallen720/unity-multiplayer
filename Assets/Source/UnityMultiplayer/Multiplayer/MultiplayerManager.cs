@@ -4,7 +4,7 @@ using System.Linq;
 using UnityUtils.Managers;
 
 namespace UnityMultiplayer {
-    public class MultiplayerManager : Singleton<MultiplayerManager>, IAuthStateListener {
+    public class MultiplayerManager : Singleton<MultiplayerManager> {
         private PlayGamesPlatform playGamesPlatform;
         private Authenticator authenticator;
         private RealtimeEventHandler realtimeEventHandler;
@@ -21,7 +21,7 @@ namespace UnityMultiplayer {
 
         private void Init() {
             InitPlayGamesPlatform();
-            authenticator.AuthStateListeners.Add(this);
+            authenticator.AuthStateUpdatedEvent.Subscribe(OnAuthStateUpdated);
             realtimeEventHandler.RealtimeMessageListeners.Add(realtimeMessageHandler);
         }
 
@@ -30,7 +30,7 @@ namespace UnityMultiplayer {
             PlayGamesPlatform.Activate();
         }
 
-        void IAuthStateListener.OnAuthStateUpdated(bool isAuthenticated) {
+        private void OnAuthStateUpdated(bool isAuthenticated) {
             client = isAuthenticated ? playGamesPlatform.RealTime : null;
         }
 
