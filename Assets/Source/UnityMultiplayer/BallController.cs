@@ -10,116 +10,110 @@ namespace UnityMultiplayer {
     [RequireComponent(typeof(Rigidbody2D))]
     public class BallController : MonoBehaviour {
 
+        // For some reason it takes 2 fixed updates for the new velocity from a collision to take
+        // effect. 
+        //
+        // NOTE: In testing, when using a rigidbody that had gravity on instead of using a constant
+        // velocity, the new velocity from the collision would happen immediately.
+        private const uint FIXED_UPDATES_UNTIL_POST_COLLISION_VELOCITY = 2U;
+
         [SerializeField]
         private float speed;
 
-        [SerializeField]
-        private int positionEmissionsPerSec;
-        
-        // Used if ball is source
-        private List<byte> positionMessage;
-        private IRealTimeMultiplayerClient client;
-
-        // Used if ball is receiver
+        private new Rigidbody2D rigidbody;
         private RealtimeMessageHandler realtimeMessageHandler;
+        private IRealTimeMultiplayerClient client;
+        private List<byte> collisionMessage;
         private string opponentID;
-        private Vector3 position;
+        private WaitForFixedUpdate fixedUpdateWait;
 
         private void Start() {
-            CheckInit();
-        }
-
-        private void CheckInit() {
-            if (IsSource()) {
-                DebugUtil.Log("Initializing ball as source");
-                InitAsSource();
-            }
-            else {
-                DebugUtil.Log("Initializing ball as receiver");
-                InitAsReceiver();
-            }
-        }
-
-        private bool IsSource() {
-            return MultiplayerManager.IsHost();
-        }
-
-        private void InitAsSource() {
-            ValidatePositionEmissionsPerSec();
-            positionMessage = new List<byte>();
-            client = MultiplayerManager.Client;
-            InitVelocity();
-            StartCoroutine(PositionEmissionRoutine());
-        }
-
-        private void ValidatePositionEmissionsPerSec() {
-            if (positionEmissionsPerSec < 1) {
-                throw new Exception(string.Format(
-                    "position emissions / second must be greater than 0; was {0}",
-                    positionEmissionsPerSec
-                ));
-            }
-        }
-
-        private void InitVelocity() {
-            GetComponent<Rigidbody2D>().velocity = Vector2.one * speed;
-        }
-
-        private IEnumerator PositionEmissionRoutine() {
-            var positionEmissionIntervalWait = new WaitForSeconds(1f / positionEmissionsPerSec);
-
-            while (true) {
-                yield return positionEmissionIntervalWait;
-                EmitPosition();
-            }
-        }
-
-        private void EmitPosition() {
-            MessageUtil.InitMessage(positionMessage, (byte)MessageType.BallPosition);
-            positionMessage.AddRange(BitConverter.GetBytes(transform.position.x));
-            positionMessage.AddRange(BitConverter.GetBytes(transform.position.y));
-
-            client.SendMessageToAll(
-                reliable: false,
-                data: positionMessage.ToArray());
-        }
-
-        private void InitAsReceiver() {
+            rigidbody = GetComponent<Rigidbody2D>();
             realtimeMessageHandler = MultiplayerManager.RealtimeMessageHandler;
+            client = MultiplayerManager.Client;
+            collisionMessage = new List<byte>();
             opponentID = MultiplayerManager.GetOpponent().ParticipantId;
-            position = transform.position;
-            GetComponent<CircleCollider2D>().enabled = false;
+            fixedUpdateWait = new WaitForFixedUpdate();
+            Init();
+        }
 
+        private void Init() {
             realtimeMessageHandler.SubscribeMessageListener(
-                MessageType.BallPosition,
+                MessageType.BallCollision,
                 opponentID,
-                OnReceivedMessage);
+                OnReceivedCollision);
 
-            StartCoroutine(PositionLerpRoutine());
+            InitVelocity();
         }
 
         private void OnDestroy() {
-            if (realtimeMessageHandler != null) {
-                realtimeMessageHandler.UnsubscribeMessageListener(
-                    MessageType.BallPosition,
-                    opponentID,
-                    OnReceivedMessage);
+            realtimeMessageHandler.UnsubscribeMessageListener(
+                MessageType.BallCollision,
+                opponentID,
+                OnReceivedCollision);
+        }
+
+        private void InitVelocity() {
+            SetVelocity(Vector2.up * GetInitVelocityDirection());
+        }
+
+        private int GetInitVelocityDirection() {
+            return MultiplayerManager.IsHost() ? 1 : -1;
+        }
+
+        private void OnCollisionEnter2D(Collision2D collision) {
+            if (IsCollisionWithPlayerPaddle(collision)) {
+                StartCoroutine(EmitCollisionRoutine());
             }
         }
 
-        private IEnumerator PositionLerpRoutine() {
-            while (true) {
-                transform.position = Vector3.Lerp(transform.position, position, speed * Time.deltaTime);
-                yield return null;
+        private bool IsCollisionWithPlayerPaddle(Collision2D collision) {
+            return collision.gameObject.name == "Player";
+        }
+
+
+        private IEnumerator EmitCollisionRoutine() {
+            yield return StartCoroutine(WaitForPostCollisionVelocityRoutine());
+            EmitCollision();
+        }
+
+        private IEnumerator WaitForPostCollisionVelocityRoutine() {
+            for (var i = 0U; i < FIXED_UPDATES_UNTIL_POST_COLLISION_VELOCITY; i++) {
+                yield return fixedUpdateWait;
             }
         }
 
-        void OnReceivedMessage(byte[] message) {
+        private void EmitCollision() {
+            MessageUtil.InitMessage(collisionMessage, (byte)MessageType.BallCollision);
+            collisionMessage.AddRange(BitConverter.GetBytes(transform.position.x));
+            collisionMessage.AddRange(BitConverter.GetBytes(transform.position.y));
+            collisionMessage.AddRange(BitConverter.GetBytes(rigidbody.velocity.x));
+            collisionMessage.AddRange(BitConverter.GetBytes(rigidbody.velocity.y));
+
+            client.SendMessageToAll(
+                reliable: false,
+                data: collisionMessage.ToArray());
+        }
+
+        private void OnReceivedCollision(byte[] message) {
             const int X_POSITION_INDEX = MessageUtil.MESSAGE_DATA_START_INDEX;
             const int Y_POSITION_INDEX = X_POSITION_INDEX + sizeof(float);
+            const int X_VELOCITY_INDEX = Y_POSITION_INDEX + sizeof(float);
+            const int Y_VELOCITY_INDEX = X_VELOCITY_INDEX + sizeof(float);
 
-            position.x = -BitConverter.ToSingle(message, X_POSITION_INDEX);
-            position.y = -BitConverter.ToSingle(message, Y_POSITION_INDEX);
+            transform.position = new Vector3(
+                -BitConverter.ToSingle(message, X_POSITION_INDEX),
+                -BitConverter.ToSingle(message, Y_POSITION_INDEX)
+            );
+
+            SetVelocity(new Vector3(
+                -BitConverter.ToSingle(message, X_VELOCITY_INDEX),
+                -BitConverter.ToSingle(message, Y_VELOCITY_INDEX)
+            ));
+        }
+
+        private void SetVelocity(Vector3 velocity) {
+            rigidbody.velocity = velocity * speed;
         }
     }
 }
