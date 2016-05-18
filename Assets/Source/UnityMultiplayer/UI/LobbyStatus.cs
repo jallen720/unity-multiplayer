@@ -2,7 +2,7 @@
 using UnityEngine.UI;
 
 namespace UnityMultiplayer {
-    public class LobbyStatus : MonoBehaviour, IRoomConnectedListener {
+    public class LobbyStatus : MonoBehaviour {
 
         [SerializeField]
         private Text lobbyMessage;
@@ -18,14 +18,14 @@ namespace UnityMultiplayer {
         }
 
         private void Init() {
-            realtimeEventHandler.RoomConnectedListeners.Add(this);
+            realtimeEventHandler.RoomConnectedEvent.Subscribe(OnRoomConnected);
         }
 
         private void OnDestroy() {
-            realtimeEventHandler.RoomConnectedListeners.Remove(this);
+            realtimeEventHandler.RoomConnectedEvent.Unsubscribe(OnRoomConnected);
         }
 
-        void IRoomConnectedListener.OnRoomConnected() {
+        private void OnRoomConnected() {
             ShowOpponent();
             DisableSpinner();
         }

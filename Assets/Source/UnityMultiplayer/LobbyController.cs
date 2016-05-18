@@ -2,7 +2,7 @@
 using UnityEngine.SceneManagement;
 
 namespace UnityMultiplayer {
-    public class LobbyController : MonoBehaviour, IRoomConnectedListener {
+    public class LobbyController : MonoBehaviour {
         private RealtimeEventHandler realtimeListener;
 
         private void Start() {
@@ -11,15 +11,15 @@ namespace UnityMultiplayer {
         }
 
         private void Init() {
-            realtimeListener.RoomConnectedListeners.Add(this);
+            realtimeListener.RoomConnectedEvent.Subscribe(OnRoomConnected);
             MultiplayerManager.StartMatchmaking();
         }
 
         private void OnDestroy() {
-            realtimeListener.RoomConnectedListeners.Remove(this);
+            realtimeListener.RoomConnectedEvent.Unsubscribe(OnRoomConnected);
         }
 
-        void IRoomConnectedListener.OnRoomConnected() {
+        private void OnRoomConnected() {
             SceneManager.LoadScene("Game");
         }
     }

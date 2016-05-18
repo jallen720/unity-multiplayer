@@ -5,7 +5,7 @@ using System.Linq;
 using GooglePlayGames.BasicApi.Multiplayer;
 
 namespace UnityMultiplayer {
-    public class ConnectedPeersDisplay : MonoBehaviour, IPeerListener {
+    public class ConnectedPeersDisplay : MonoBehaviour {
 
         [SerializeField]
         private Text connectedPeersText;
@@ -20,18 +20,20 @@ namespace UnityMultiplayer {
         }
 
         private void Init() {
-            realtimeEventHandler.PeerListeners.Add(this);
+            realtimeEventHandler.PeerConnectedEvent.Subscribe(OnPeerConnected);
+            realtimeEventHandler.PeerDisconnectedEvent.Subscribe(OnPeerDisconnected);
         }
 
         private void OnDestroy() {
-            realtimeEventHandler.PeerListeners.Remove(this);
+            realtimeEventHandler.PeerConnectedEvent.Unsubscribe(OnPeerConnected);
+            realtimeEventHandler.PeerDisconnectedEvent.Unsubscribe(OnPeerDisconnected);
         }
 
-        void IPeerListener.OnPeerConnected(string participantID) {
+        private void OnPeerConnected(string participantID) {
             connectedPeers.Add(participantID);
         }
 
-        void IPeerListener.OnPeerDisconnected(string participantID) {
+        private void OnPeerDisconnected(string participantID) {
             connectedPeers.Remove(participantID);
         }
 

@@ -4,7 +4,7 @@ using UnityEngine;
 namespace UnityMultiplayer {
 
     [RequireComponent(typeof(PositionLerper))]
-    public class OpponentController : MonoBehaviour, IMessageListener {
+    public class OpponentController : MonoBehaviour {
         private RealtimeMessageHandler realtimeMessageHandler;
         private PlayerController playerController;
         private PositionLerper positionLerper;
@@ -23,10 +23,10 @@ namespace UnityMultiplayer {
         private void Init() {
             InitPositionLerper();
 
-            realtimeMessageHandler.AddMessageListener(
+            realtimeMessageHandler.SubscribeMessageListener(
                 MessageType.PaddlePosition,
                 opponentID,
-                this);
+                OnReceivedMessage);
         }
 
         private void InitPositionLerper() {
@@ -35,13 +35,13 @@ namespace UnityMultiplayer {
         }
 
         private void OnDestroy() {
-            realtimeMessageHandler.RemoveMessageListener(
+            realtimeMessageHandler.UnsubscribeMessageListener(
                 MessageType.PaddlePosition,
                 opponentID,
-                this);
+                OnReceivedMessage);
         }
 
-        void IMessageListener.OnReceivedMessage(byte[] message) {
+        private void OnReceivedMessage(byte[] message) {
             opponentXPosition = GetMirroredOpponentXPosition(message);
         }
 

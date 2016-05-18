@@ -1,45 +1,39 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityUtils.EventUtils;
 
 namespace UnityMultiplayer {
-    public class RealtimeMessageHandler : IRealtimeMessageListener {
+    public class RealtimeMessageHandler {
         private delegate void MessageRouter(
             bool isReliable,
             string participantID,
             byte[] message);
 
-        private readonly List<byte> validMessageTypes;
+        private List<byte> validMessageTypes;
+        private Dictionary<MessageType, Dictionary<string, Event<byte[]>>> MessageEvents;
 
-        public Dictionary<MessageType, Dictionary<string, List<IMessageListener>>> MessageListeners {
-            get;
-            private set;
-        }
-
-        public RealtimeMessageHandler() {
+        public RealtimeMessageHandler(RealtimeEventHandler realtimeEventHandler) {
             validMessageTypes = new List<byte>();
 
-            MessageListeners =
-                new Dictionary<MessageType, Dictionary<string, List<IMessageListener>>> {
-                    { MessageType.BallPosition   , new Dictionary<string, List<IMessageListener>>() },
-                    { MessageType.PaddlePosition , new Dictionary<string, List<IMessageListener>>() },
+            MessageEvents =
+                new Dictionary<MessageType, Dictionary<string, Event<byte[]>>> {
+                    { MessageType.BallCollision  , new Dictionary<string, Event<byte[]>>() },
+                    { MessageType.PaddlePosition , new Dictionary<string, Event<byte[]>>() },
                 };
 
             InitValidMessageTypes();
+            realtimeEventHandler.RealtimeMessageEvent.Subscribe(OnRealtimeMessage);
         }
 
         private void InitValidMessageTypes() {
             validMessageTypes.AddRange(Enum.GetValues(typeof(MessageType)).Cast<byte>());
         }
 
-        void IRealtimeMessageListener.OnReceivedRealtimeMessage(
-            bool isReliable,
-            string participantID,
-            byte[] message)
-        {
+        private void OnRealtimeMessage(bool isReliable, string participantID, byte[] message) {
             MessageUtil.ValidateMessage(message, validMessageTypes);
 
-            TriggerMessageListeners(
+            TriggerMessageEvents(
                 GetMessageType(message),
                 participantID,
                 message);
@@ -49,39 +43,34 @@ namespace UnityMultiplayer {
             return (MessageType)MessageUtil.GetMessageType(message);
         }
 
-        private void TriggerMessageListeners(
+        private void TriggerMessageEvents(
             MessageType messageType,
             string participantID,
             byte[] message)
         {
-            GetMessageListeners(messageType, messageListeners => {
-                if (messageListeners.ContainsKey(participantID)) {
-                    foreach (IMessageListener messageListener in messageListeners[participantID]) {
-                        messageListener.OnReceivedMessage(message);
-                    }
+            GetMessageEvents(messageType, messageEvents => {
+                if (messageEvents.ContainsKey(participantID)) {
+                    messageEvents[participantID].Trigger(message);
                 }
             });
         }
 
-        public void AddMessageListener(
+        public void SubscribeMessageListener(
             MessageType messageType,
             string participantID,
-            IMessageListener messageListener)
+            Event<byte[]>.Listener messageListener)
         {
-            GetMessageListeners(messageType, messageListeners => {
-                if (messageListeners.ContainsKey(participantID)) {
-                    messageListeners[participantID].Add(messageListener);
+            GetMessageEvents(messageType, messageEvents => {
+                if (!messageEvents.ContainsKey(participantID)) {
+                    messageEvents.Add(participantID, new Event<byte[]>());
                 }
-                else {
-                    messageListeners.Add(
-                        participantID,
-                        new List<IMessageListener> { messageListener });
-                }
+
+                messageEvents[participantID].Subscribe(messageListener);
             });
         }
 
-        private void ValidateHasListeners(MessageType messageType) {
-            if (!MessageListeners.ContainsKey(messageType)) {
+        private void ValidateHasEvents(MessageType messageType) {
+            if (!MessageEvents.ContainsKey(messageType)) {
                 throw new Exception(string.Format(
                     "Message type {0} has not been setup in {1}",
                     messageType,
@@ -90,36 +79,36 @@ namespace UnityMultiplayer {
             }
         }
 
-        public void RemoveMessageListener(
+        public void UnsubscribeMessageListener(
             MessageType messageType,
             string participantID,
-            IMessageListener messageListener)
+            Event<byte[]>.Listener messageListener)
         {
-            GetMessageListeners(messageType, messageListeners => {
-                if (messageListeners.ContainsKey(participantID)) {
-                    messageListeners[participantID].Remove(messageListener);
+            GetMessageEvents(messageType, messageEvents => {
+                if (messageEvents.ContainsKey(participantID)) {
+                    messageEvents[participantID].Unsubscribe(messageListener);
                 }
                 else {
                     throw new Exception(string.Format(
-                        "trying to remove message listener for participant {0} but no listeners " +
-                        "exist for that participant",
+                        "trying to remove message listener from events for participant {0} but " +
+                        "no listeners exist for that participant",
                         participantID
                     ));
                 }
             });
         }
 
-        private void GetMessageListeners(
+        private void GetMessageEvents(
             MessageType messageType,
-            Action<Dictionary<string, List<IMessageListener>>> callback)
+            Action<Dictionary<string, Event<byte[]>>> callback)
         {
-            ValidateHasListeners(messageType);
-            callback(MessageListeners[messageType]);
+            ValidateHasEvents(messageType);
+            callback(MessageEvents[messageType]);
         }
     }
 
     public enum MessageType : byte {
         PaddlePosition,
-        BallPosition,
+        BallCollision,
     }
 }

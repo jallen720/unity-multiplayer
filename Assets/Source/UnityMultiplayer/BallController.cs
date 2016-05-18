@@ -8,7 +8,7 @@ namespace UnityMultiplayer {
 
     [RequireComponent(typeof(CircleCollider2D))]
     [RequireComponent(typeof(Rigidbody2D))]
-    public class BallController : MonoBehaviour, IMessageListener {
+    public class BallController : MonoBehaviour {
 
         [SerializeField]
         private float speed;
@@ -90,20 +90,20 @@ namespace UnityMultiplayer {
             position = transform.position;
             GetComponent<CircleCollider2D>().enabled = false;
 
-            realtimeMessageHandler.AddMessageListener(
+            realtimeMessageHandler.SubscribeMessageListener(
                 MessageType.BallPosition,
                 opponentID,
-                this);
+                OnReceivedMessage);
 
             StartCoroutine(PositionLerpRoutine());
         }
 
         private void OnDestroy() {
             if (realtimeMessageHandler != null) {
-                realtimeMessageHandler.RemoveMessageListener(
+                realtimeMessageHandler.UnsubscribeMessageListener(
                     MessageType.BallPosition,
                     opponentID,
-                    this);
+                    OnReceivedMessage);
             }
         }
 
@@ -114,7 +114,7 @@ namespace UnityMultiplayer {
             }
         }
 
-        void IMessageListener.OnReceivedMessage(byte[] message) {
+        void OnReceivedMessage(byte[] message) {
             const int X_POSITION_INDEX = MessageUtil.MESSAGE_DATA_START_INDEX;
             const int Y_POSITION_INDEX = X_POSITION_INDEX + sizeof(float);
 

@@ -1,29 +1,20 @@
 ﻿using GooglePlayGames.BasicApi.Multiplayer;
 using System;
-using System.Collections.Generic;
 using System.Linq;
+using UnityUtils.EventUtils;
 
 namespace UnityMultiplayer {
     public class RealtimeEventHandler : RealTimeMultiplayerListener {
-        public List<IRoomConnectedListener> RoomConnectedListeners {
-            get;
-            private set;
-        }
-
-        public List<IPeerListener> PeerListeners {
-            get;
-            private set;
-        }
-
-        public List<IRealtimeMessageListener> RealtimeMessageListeners {
-            get;
-            private set;
-        }
+        public readonly Event RoomConnectedEvent;
+        public readonly Event<string> PeerConnectedEvent;
+        public readonly Event<string> PeerDisconnectedEvent;
+        public readonly Event<bool, string, byte[]> RealtimeMessageEvent;
 
         public RealtimeEventHandler() {
-            RoomConnectedListeners = new List<IRoomConnectedListener>();
-            PeerListeners = new List<IPeerListener>();
-            RealtimeMessageListeners = new List<IRealtimeMessageListener>();
+            RoomConnectedEvent = new Event();
+            PeerConnectedEvent = new Event<string>();
+            PeerDisconnectedEvent = new Event<string>();
+            RealtimeMessageEvent = new Event<bool, string, byte[]>();
         }
 
         void RealTimeMultiplayerListener.OnRoomSetupProgress(float percent) {
@@ -33,16 +24,10 @@ namespace UnityMultiplayer {
         void RealTimeMultiplayerListener.OnRoomConnected(bool success) {
             if (success) {
                 DebugUtil.Log("Successfully connected to the room");
-                TriggerRoomConnectedListeners();
+                RoomConnectedEvent.Trigger();
             }
             else {
                 DebugUtil.Log("Failed to connect to the room");
-            }
-        }
-
-        private void TriggerRoomConnectedListeners() {
-            foreach (IRoomConnectedListener roomConnectedListener in RoomConnectedListeners) {
-                roomConnectedListener.OnRoomConnected();
             }
         }
 
@@ -59,20 +44,12 @@ namespace UnityMultiplayer {
 
         void RealTimeMultiplayerListener.OnPeersConnected(string[] participantIDs) {
             PeersMessage(participantIDs, "connected");
-            TriggerPeerListeners(participantIDs, TriggerConnectPeer);
+            Array.ForEach(participantIDs, PeerConnectedEvent.Trigger);
         }
 
         void RealTimeMultiplayerListener.OnPeersDisconnected(string[] participantIDs) {
             PeersMessage(participantIDs, "disconnected");
-            TriggerPeerListeners(participantIDs, TriggerDisconnectPeer);
-        }
-
-        private void TriggerConnectPeer(IPeerListener peerListener, string participantID) {
-            peerListener.OnPeerConnected(participantID);
-        }
-
-        private void TriggerDisconnectPeer(IPeerListener peerListener, string participantID) {
-            peerListener.OnPeerDisconnected(participantID);
+            Array.ForEach(participantIDs, PeerDisconnectedEvent.Trigger);
         }
 
         private void PeersMessage(string[] participantIDs, string peerStatus) {
@@ -86,25 +63,12 @@ namespace UnityMultiplayer {
             return message + "    " + participantID + "\n";
         }
 
-        private void TriggerPeerListeners(
-            string[] participantIDs,
-            Action<IPeerListener, string> triggerAction)
-        {
-            foreach (string participantID in participantIDs) {
-                foreach (IPeerListener peerListener in PeerListeners) {
-                    triggerAction(peerListener, participantID);
-                }
-            }
-        }
-
         void RealTimeMultiplayerListener.OnRealTimeMessageReceived(
             bool isReliable,
             string participantID,
             byte[] data)
         {
-            foreach (IRealtimeMessageListener realtimeMessageListener in RealtimeMessageListeners) {
-                realtimeMessageListener.OnReceivedRealtimeMessage(isReliable, participantID, data);
-            }
+            RealtimeMessageEvent.Trigger(isReliable, participantID, data);
         }
     }
 }

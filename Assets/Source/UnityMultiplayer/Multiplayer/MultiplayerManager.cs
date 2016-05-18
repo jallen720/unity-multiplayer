@@ -15,14 +15,13 @@ namespace UnityMultiplayer {
             playGamesPlatform = PlayGamesPlatform.Instance;
             authenticator = new Authenticator(playGamesPlatform);
             realtimeEventHandler = new RealtimeEventHandler();
-            realtimeMessageHandler = new RealtimeMessageHandler();
+            realtimeMessageHandler = new RealtimeMessageHandler(realtimeEventHandler);
             Init();
         }
 
         private void Init() {
             InitPlayGamesPlatform();
             authenticator.AuthStateUpdatedEvent.Subscribe(OnAuthStateUpdated);
-            realtimeEventHandler.RealtimeMessageListeners.Add(realtimeMessageHandler);
         }
 
         private void InitPlayGamesPlatform() {
