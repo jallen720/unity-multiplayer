@@ -59,12 +59,12 @@ namespace UnityMultiplayer {
             }
         }
 
-        public static void StartMatchmaking() {
+        public static void StartMatchmaking(uint minOpponents, uint maxOpponents, uint variant) {
             Client.CreateQuickGame(
-                minOpponents: 1,
-                maxOpponents: 1,
-                variant: 0,
-                listener: RealtimeEventHandler
+                minOpponents,
+                maxOpponents,
+                variant,
+                RealtimeEventHandler
             );
         }
 

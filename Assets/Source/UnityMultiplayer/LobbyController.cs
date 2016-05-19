@@ -12,7 +12,12 @@ namespace UnityMultiplayer {
 
         private void Init() {
             realtimeListener.RoomConnectedEvent.Subscribe(OnRoomConnected);
-            MultiplayerManager.StartMatchmaking();
+
+            MultiplayerManager.StartMatchmaking(
+                minOpponents: 1,
+                maxOpponents: 1,
+                variant: 0
+            );
         }
 
         private void OnDestroy() {
