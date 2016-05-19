@@ -18,7 +18,7 @@ namespace UnityMultiplayer {
         }
 
         void RealTimeMultiplayerListener.OnRoomSetupProgress(float percent) {
-            DebugUtil.Log(string.Format("Setup: {0}%", percent));
+            DebugUtil.Log("Setup: " + percent + "%");
         }
 
         void RealTimeMultiplayerListener.OnRoomConnected(bool success) {
@@ -36,10 +36,7 @@ namespace UnityMultiplayer {
         }
 
         void RealTimeMultiplayerListener.OnParticipantLeft(Participant participant) {
-            DebugUtil.Log(string.Format(
-                "{0} declined the invitation or left",
-                participant.DisplayName
-            ));
+            DebugUtil.Log(participant.DisplayName + " declined the invitation or left");
         }
 
         void RealTimeMultiplayerListener.OnPeersConnected(string[] participantIDs) {
