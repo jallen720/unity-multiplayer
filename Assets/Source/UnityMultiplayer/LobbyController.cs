@@ -3,15 +3,15 @@ using UnityEngine.SceneManagement;
 
 namespace UnityMultiplayer {
     public class LobbyController : MonoBehaviour {
-        private RealtimeEventHandler realtimeListener;
+        private RealtimeEventHandler realtimeEventListener;
 
         private void Start() {
-            realtimeListener = MultiplayerManager.RealtimeEventHandler;
+            realtimeEventListener = MultiplayerManager.RealtimeEventHandler;
             Init();
         }
 
         private void Init() {
-            realtimeListener.RoomConnectedEvent.Subscribe(OnRoomConnected);
+            realtimeEventListener.RoomConnectedSuccessEvent.Subscribe(OnRoomConnected);
 
             MultiplayerManager.StartMatchmaking(
                 minOpponents: 1,
@@ -21,7 +21,7 @@ namespace UnityMultiplayer {
         }
 
         private void OnDestroy() {
-            realtimeListener.RoomConnectedEvent.Unsubscribe(OnRoomConnected);
+            realtimeEventListener.RoomConnectedSuccessEvent.Unsubscribe(OnRoomConnected);
         }
 
         private void OnRoomConnected() {
