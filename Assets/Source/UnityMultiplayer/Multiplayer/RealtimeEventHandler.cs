@@ -5,13 +5,13 @@ using UnityUtils.EventUtils;
 
 namespace UnityMultiplayer {
     public class RealtimeEventHandler : RealTimeMultiplayerListener {
-        public readonly Event RoomConnectedEvent;
+        public readonly Event<bool> RoomConnectedEvent;
         public readonly Event<string> PeerConnectedEvent;
         public readonly Event<string> PeerDisconnectedEvent;
         public readonly Event<bool, string, byte[]> RealtimeMessageEvent;
 
         public RealtimeEventHandler() {
-            RoomConnectedEvent = new Event();
+            RoomConnectedEvent = new Event<bool>();
             PeerConnectedEvent = new Event<string>();
             PeerDisconnectedEvent = new Event<string>();
             RealtimeMessageEvent = new Event<bool, string, byte[]>();
@@ -21,14 +21,14 @@ namespace UnityMultiplayer {
             DebugUtil.Log("Setup: " + percent + "%");
         }
 
-        void RealTimeMultiplayerListener.OnRoomConnected(bool success) {
-            if (success) {
-                DebugUtil.Log("Successfully connected to the room");
-                RoomConnectedEvent.Trigger();
-            }
-            else {
-                DebugUtil.Log("Failed to connect to the room");
-            }
+        void RealTimeMultiplayerListener.OnRoomConnected(bool connectedSuccessfully) {
+            DebugUtil.Log(
+                connectedSuccessfully
+                ? "Successfully connected to the room"
+                : "Failed to connect to the room"
+            );
+
+            RoomConnectedEvent.Trigger(connectedSuccessfully);
         }
 
         void RealTimeMultiplayerListener.OnLeftRoom() {

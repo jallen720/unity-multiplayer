@@ -25,16 +25,15 @@ namespace UnityMultiplayer {
             realtimeEventHandler.RoomConnectedEvent.Unsubscribe(OnRoomConnected);
         }
 
-        private void OnRoomConnected() {
-            ShowOpponent();
+        private void OnRoomConnected(bool connectedSuccessfully) {
+            lobbyMessage.text = GetRoomStatusMessage(connectedSuccessfully);
             DisableSpinner();
         }
 
-        private void ShowOpponent() {
-            lobbyMessage.text = string.Format(
-                "YOUR OPPONENT IS: {0}",
-                MultiplayerManager.GetOpponent().DisplayName
-            );
+        private string GetRoomStatusMessage(bool connectedSuccessfully) {
+            return connectedSuccessfully
+                   ? "YOUR OPPONENT IS: " + MultiplayerManager.GetOpponent().DisplayName
+                   : "FAILED TO CONNECT TO ROOM";
         }
 
         private void DisableSpinner() {

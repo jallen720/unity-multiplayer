@@ -20,16 +20,22 @@ namespace UnityMultiplayer {
             Keys.Add(key);
         }
 
+        public void RemoveKey(KeyCode keyCode) {
+            Keys.Remove(Keys.Find((Key key) => key.code == keyCode));
+        }
+
         private void Update() {
             CheckForKeyInputs();
         }
 
         private void CheckForKeyInputs() {
-            foreach (Key key in Keys) {
-                if (key.isActivePredicate(key.code)) {
-                    key.onActiveCallback();
-                }
+            foreach (Key key in GetActiveKeys()) {
+                key.onActiveCallback();
             }
+        }
+
+        private List<Key> GetActiveKeys() {
+            return Keys.FindAll((Key key) => key.isActivePredicate(key.code));
         }
 
         public class Key {
