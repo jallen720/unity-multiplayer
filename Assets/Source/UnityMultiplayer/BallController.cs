@@ -54,7 +54,7 @@ namespace UnityMultiplayer {
         }
 
         private void InitVelocity() {
-            SetVelocity(Vector2.up * GetInitVelocityDirection());
+            rigidbody.velocity = Vector2.one * GetInitVelocityDirection() * speed;
         }
 
         private int GetInitVelocityDirection() {
@@ -106,14 +106,10 @@ namespace UnityMultiplayer {
                 -BitConverter.ToSingle(message, Y_POSITION_INDEX)
             );
 
-            SetVelocity(new Vector3(
+            rigidbody.velocity = new Vector3(
                 -BitConverter.ToSingle(message, X_VELOCITY_INDEX),
                 -BitConverter.ToSingle(message, Y_VELOCITY_INDEX)
-            ));
-        }
-
-        private void SetVelocity(Vector3 velocity) {
-            rigidbody.velocity = velocity * speed;
+            );
         }
     }
 }
