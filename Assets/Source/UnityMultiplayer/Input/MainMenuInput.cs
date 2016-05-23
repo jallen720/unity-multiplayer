@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityUtils.InputUtils;
 
 namespace UnityMultiplayer {
 

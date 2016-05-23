@@ -6,12 +6,14 @@ using UnityUtils.EventUtils;
 namespace UnityMultiplayer {
     public class RealtimeEventHandler : RealTimeMultiplayerListener {
         public readonly Event<bool> RoomConnectedEvent;
+        public readonly Event RoomLeftEvent;
         public readonly Event<string> PeerConnectedEvent;
         public readonly Event<string> PeerDisconnectedEvent;
         public readonly Event<bool, string, byte[]> RealtimeMessageEvent;
 
         public RealtimeEventHandler() {
             RoomConnectedEvent = new Event<bool>();
+            RoomLeftEvent = new Event();
             PeerConnectedEvent = new Event<string>();
             PeerDisconnectedEvent = new Event<string>();
             RealtimeMessageEvent = new Event<bool, string, byte[]>();
@@ -33,6 +35,7 @@ namespace UnityMultiplayer {
 
         void RealTimeMultiplayerListener.OnLeftRoom() {
             DebugUtil.Log("User has left the room");
+            RoomLeftEvent.Trigger();
         }
 
         void RealTimeMultiplayerListener.OnParticipantLeft(Participant participant) {
